@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+ 
+{% block container %}
+  {% if current_user.is_authenticated %}
+    <div class="home">
+      <div class="topLogo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" />
+      </div>
+      <div class="topHeader">
+        <h1>Support Manager</h1>
+      </div>
+      <p>Inventario de equipos</p>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="cantCloseWindowGeneral">
+        <label class="form-check-label" for="cantCloseWindowGeneral">Forzar inventario por defecto</label>
+      </div>
+      {% if colnames|length > 0 %}
+        <table id="inventory" class="table table-striped wrap">
+          <thead>
+            <tr>
+              {% for col in colnames %}
+              <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+              {% for col in colnames %}
+              <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </tfoot>
+        </table>
+      {% else %}
+        <p>Aun no hay inventarios cargados...</p>
+      {% endif %}
+      <p>Usuario: {{ current_user.username }}</p>
+      <div class="d-flex justify-content-center">
+        <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+      </div>
+    </div>
+    <script>
+      $(document).ready(function() {
+        $('#inventory tfoot th').each(function() {
+          var title = $(this).text();
+          $(this).html('<input type="text" placeholder="Buscar '+title+'" />')
+        });
+        var table = $('#inventory').DataTable( {
+          dom: 'Blfrtip',
+          processing: true,
+          serverSide: true,
+          ajax: {
+            url: "https://inventario.local/inventories/forDataTables",
+            contentType: "application/json",
+            type: "POST",
+            data: function( args ) {
+              return JSON.stringify( args )
+            }
+          },
+          initComplete: function() {
+            var api = this.api();
+
+            api.columns().every(function() {
+              var that = this;
+
+              $('input', this.footer()).on('keyup change', function() {
+                if( that.search() !== this.value ) {
+                  that
+                    .search(this.value)
+                    .draw();
+                } 
+              });
+            });
+          },
+          language: {
+            "decimal":        "",
+            "emptyTable":     "No hay registros de inventario disponibles.",
+            "info":           "Mostrando de _START_ a _END_, de un total de _TOTAL_ inventarios",
+            "infoEmpty":      "Mostrando de 0 a 0, de un total de 0 inventarios",
+            "infoFiltered":   "(filtrado de _MAX_ inventarios totales)",
+            "infoPostFix":    "",
+            "thousands":      ",",
+            "lengthMenu":     "Mostrar _MENU_ inventarios",
+            "loadingRecords": "Cargando...",
+            "processing":     "",
+            "search":         "Buscar:",
+            "zeroRecords":    "No se encontraron inventarios coincidentes con la busqueda",
+            "paginate": {
+              "first":      "Primero",
+              "last":       "Ultimo",
+              "next":       "Siguiente",
+              "previous":   "Anterior"
+            },
+            "aria": {
+              "sortAscending":  ": activar para ordenar la columna ascendentemente",
+              "sortDescending": ": activar para ordenar la columna descendentemente"
+            },
+            "buttons": {
+              "colvis": "Visibilidad de columnas",
+              "copyTitle": "Copiado con exito",
+              "copyKeys": "Presione <i>CTRL</i> o <i>\u2318</i> + <i>C</i> para copiar la informacion de la tabla<br>a tu portapapeles.<br><br>Para cancelar, haga click sobre este mensaje o presione <i>ESCAPE</i>",
+              "copySuccess": {
+                "_": "%d lineas copiadas",
+                "1": "1 linea copiada"
+              }
+            }
+          },
+          // bAutoWidth: false,
+          colReorder: true,
+          fixedHeader: true,
+          scrollX: true,
+          select: {
+            style: "multi"
+          },
+          columnDefs: [
+            {
+              targets: 1,
+              className: 'noVis'
+            }
+          ],
+          buttons: [
+            {
+              extend: 'copyHtml5',
+              text: 'Copiar'
+            },
+            'excelHtml5',
+            'csvHtml5',
+            'pdfHtml5',
+            {
+              extend: 'colvis',
+              columns: ':not(.noVis)'
+            },
+            {
+              text: "Seleccionar pagina",
+              action: function() {
+                table.rows({page: 'current'}).select()
+              }
+            },
+            {
+              text: "Deseleccionar pagina",
+              action: function() {
+                table.rows({page: 'current'}).deselect()
+              }
+            },
+            {
+              text: "Llenar inventario nuevamente",
+              action: function() {
+                var rowsSelected = table.rows( { selected: true } ).every(function(rowIdx, tableLoop, rowLoop){
+                  rowData = this.data()
+                  console.log(rowData)
+                  var id = rowData[0];
+                  var xhr = new XMLHttpRequest();
+                  var URL = "https://inventario.local/inventory/updateMustRefillAgain"
+                  xhr.open("POST", URL)
+                  xhr.table = this
+                  xhr.rowIdx = rowIdx
+                  xhr.mustRefillAgainColumnIdx = rowData.length - 3
+                  xhr.setRequestHeader("Content-Type", "application/json")
+                  xhr.onload = function(e) {
+                    if (xhr.readyState === 4) {
+                      if (xhr.status === 200) {
+                        this.table.cell({ row: this.rowIdx, column: this.mustRefillAgainColumnIdx}).data("True").draw()
+                      }
+                    }
+                  }
+                  xhr.send(JSON.stringify({
+                    "id": id,
+                    "MustRefillAgain": true
+                  }))
+                  console.log(id)
+                })
+              }
+            },
+            {
+              text: "Forzar inventario",
+              action: function() {
+                var rowsSelected = table.rows( { selected: true } ).every(function(rowIdx, tableLoop, rowLoop){
+                  rowData = this.data()
+                  console.log(rowData)
+                  var id = rowData[rowData.length - 1];
+                  var xhr = new XMLHttpRequest();
+                  var URL = "https://inventario.local/inventory/updateCantCloseWindow"
+                  xhr.open("POST", URL)
+                  xhr.table = this
+                  xhr.rowIdx = rowIdx
+                  xhr.cantCloseWindowColumnIdx = rowData.length - 2
+                  xhr.setRequestHeader("Content-Type", "application/json")
+                  xhr.onload = function(e) {
+                    if (xhr.readyState === 4) {
+                      if (xhr.status === 200) {
+                        this.table.cell({ row: this.rowIdx, column: this.cantCloseWindowColumnIdx}).data("True").draw()
+                      }
+                    }
+                  }
+                  xhr.send(JSON.stringify({
+                    "id": id,
+                    "CantCloseWindow": true
+                  }))
+                  console.log(id)
+                })
+              }
+            },
+            {
+              text: "No forzar inventario",
+              action: function() {
+                var rowsSelected = table.rows( { selected: true } ).every(function(rowIdx, tableLoop, rowLoop){
+                  rowData = this.data()
+                  console.log(rowData)
+                  var id = rowData[rowData.length - 1];
+                  var xhr = new XMLHttpRequest();
+                  var URL = "https://inventario.local/inventory/updateCantCloseWindow"
+                  xhr.open("POST", URL)
+                  xhr.table = this
+                  xhr.rowIdx = rowIdx
+                  xhr.cantCloseWindowColumnIdx = rowData.length - 2
+                  xhr.setRequestHeader("Content-Type", "application/json")
+                  xhr.onload = function(e) {
+                    if (xhr.readyState === 4) {
+                      if (xhr.status === 200) {
+                        this.table.cell({ row: this.rowIdx, column: this.cantCloseWindowColumnIdx}).data("False").draw()
+                      }
+                    }
+                  }
+                  xhr.send(JSON.stringify({
+                    "id": id,
+                    "CantCloseWindow": false
+                  }))
+                  console.log(id)
+                })
+              }
+            },
+            {
+              text: "Limpiar todos los filtros",
+              action: function(e, dt, node, config) {
+                $("input").each(function() {
+                  $(this).val('');
+                });
+                dt
+                  .search('')
+                  .columns()
+                  .search('')
+                  .draw();
+              }
+            }
+          ]
+        } );
+
+        function changeCantCloseWindowGeneral(newState, event) {
+          var xhr = new XMLHttpRequest();
+          var URL = "https://inventario.local/inventories/updateCantCloseWindow/general"
+          xhr.open("POST", URL)
+          xhr.responseType = "json"
+          xhr.setRequestHeader("Content-Type", "application/json")
+          xhr.event = event
+          xhr.onload = function() {
+            if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                var jsonResponse = xhr.response
+                $('#cantCloseWindowGeneral').prop('checked', jsonResponse.CantCloseWindow)
+              } else {
+                xhr.event.preventDefault();
+                $('#cantCloseWindowGeneral').prop('disabled', true)
+              }
+            }
+          }
+          xhr.send(JSON.stringify({
+            "CantCloseWindow": newState
+          }))  
+        }
+
+        $('#cantCloseWindowGeneral').on('mousedown keydown', function(event) {
+          changeCantCloseWindowGeneral(!($(this).prop('checked')), event)
+        })
+        
+        var xhr = new XMLHttpRequest();
+        var URL = "https://inventario.local/inventories/cantCloseWindow/general"
+        xhr.responseType = "json"
+        xhr.open("GET", URL, true)
+        xhr.onload = function() {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              var jsonResponse = xhr.response
+              $('#cantCloseWindowGeneral').prop('checked', jsonResponse.CantCloseWindow)
+            } else {
+              $('#cantCloseWindowGeneral').prop('disabled', true)
+            }
+          }
+        }
+        xhr.send(null)
+      } );
+    </script>
+  {% endif %}      
+{% endblock %}

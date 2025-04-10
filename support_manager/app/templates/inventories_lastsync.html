@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+ 
+{% block container %}
+  {% if current_user.is_authenticated %}
+    <div class="home">
+      <div class="topLogo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" />
+      </div>
+      <div class="topHeader">
+        <h1>Support Manager</h1>
+      </div>
+      <p>Ultima sincronizacion de equipos de inventario</p>
+      {% if colnames|length > 0 %}
+        <table id="inventoryLastSync" class="table table-striped wrap">
+          <thead>
+            <tr>
+              {% for col in colnames %}
+              <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+              {% for col in colnames %}
+              <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </tfoot>
+        </table>
+      {% else %}
+        <p>Aun no hay sincronizaciones de equipos de inventario cargados...</p>
+      {% endif %}
+      <p>Usuario: {{ current_user.username }}</p>
+      <div class="d-flex justify-content-center">
+        <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+      </div>
+    </div>
+    <script>
+      $(document).ready(function() {
+        $('#inventoryLastSync tfoot th').each(function() {
+          var title = $(this).text();
+          $(this).html('<input type="text" placeholder="Buscar '+title+'" />')
+        });
+        var table = $('#inventoryLastSync').DataTable( {
+          dom: 'Blfrtip',
+          processing: true,
+          serverSide: true,
+          ajax: {
+            url: "https://inventario.local/inventories/lastSync/forDataTables",
+            contentType: "application/json",
+            type: "POST",
+            data: function( args ) {
+              return JSON.stringify( args )
+            }
+          },
+          initComplete: function() {
+            var api = this.api();
+
+            api.columns().every(function() {
+              var that = this;
+
+              $('input', this.footer()).on('keyup change', function() {
+                if( that.search() !== this.value ) {
+                  that
+                    .search(this.value)
+                    .draw();
+                } 
+              });
+            });
+          },
+          language: {
+            "decimal":        "",
+            "emptyTable":     "No hay registros de sincronizaciones disponibles.",
+            "info":           "Mostrando de _START_ a _END_, de un total de _TOTAL_ sincronizaciones",
+            "infoEmpty":      "Mostrando de 0 a 0, de un total de 0 sincronizaciones",
+            "infoFiltered":   "(filtrado de _MAX_ sincronizaciones totales)",
+            "infoPostFix":    "",
+            "thousands":      ",",
+            "lengthMenu":     "Mostrar _MENU_ sincronizaciones",
+            "loadingRecords": "Cargando...",
+            "processing":     "",
+            "search":         "Buscar:",
+            "zeroRecords":    "No se encontraron sincronizaciones coincidentes con la busqueda",
+            "paginate": {
+              "first":      "Primero",
+              "last":       "Ultimo",
+              "next":       "Siguiente",
+              "previous":   "Anterior"
+            },
+            "aria": {
+              "sortAscending":  ": activar para ordenar la columna ascendentemente",
+              "sortDescending": ": activar para ordenar la columna descendentemente"
+            },
+            "buttons": {
+              "colvis": "Visibilidad de columnas",
+              "copyTitle": "Copiado con exito",
+              "copyKeys": "Presione <i>CTRL</i> o <i>\u2318</i> + <i>C</i> para copiar la informacion de la tabla<br>a tu portapapeles.<br><br>Para cancelar, haga click sobre este mensaje o presione <i>ESCAPE</i>",
+              "copySuccess": {
+                "_": "%d lineas copiadas",
+                "1": "1 linea copiada"
+              }
+            }
+          },
+          // bAutoWidth: false,
+          colReorder: true,
+          fixedHeader: true,
+          scrollX: true,
+          select: {
+            style: "multi"
+          },
+          columnDefs: [
+            {
+              targets: 1,
+              className: 'noVis'
+            }
+          ],
+          buttons: [
+            {
+              extend: 'copyHtml5',
+              text: 'Copiar'
+            },
+            'excelHtml5',
+            'csvHtml5',
+            'pdfHtml5',
+            {
+              extend: 'colvis',
+              columns: ':not(.noVis)'
+            },
+            {
+              text: "Seleccionar pagina",
+              action: function() {
+                table.rows({page: 'current'}).select()
+              }
+            },
+            {
+              text: "Deseleccionar pagina",
+              action: function() {
+                table.rows({page: 'current'}).deselect()
+              }
+            },
+            {
+              text: "Limpiar todos los filtros",
+              action: function(e, dt, node, config) {
+                $("input").each(function() {
+                  $(this).val('');
+                });
+                dt
+                  .search('')
+                  .columns()
+                  .search('')
+                  .draw();
+              }
+            }
+          ]
+        } );
+      } );
+    </script>
+  {% endif %}      
+{% endblock %}

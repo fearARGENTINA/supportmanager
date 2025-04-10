@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+ 
+{% block container %}
+{% if current_user.is_authenticated %}
+    <div class="home-body m-5">
+        <div class="topLogo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" />
+          </div>
+          <div class="topHeader">
+            <h1>Support Manager</h1>
+          </div>
+        <p>Aplicaciones disponibles para sus permisos:</p>
+        <div class="row">
+            {% if is_usb_activator %}
+                <div class="col-sm-6">
+                    <a href="/usbenabler">
+                        <div class="card mb-3">
+                            <img class="card-img-top img-fluid mx-auto" src="{{ url_for('static', filename='img/memoria-usb.png') }}" alt="USB Image">
+                            <div class="card-body">
+                                <h5 class="card-title">Activador USB</h5>
+                                <p class="card-text">Esta aplicación te permitira activar los USB's de un equipo en particular hasta las 00:00hs. del siguiente dia.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endif %}
+            {% if is_inventory_admin %}
+                <!-- <div class="col-sm-6">
+                    <a href="/inventory">
+                        <div class="card mb-3">
+                            <img class="card-img-top img-fluid mx-auto" src="{{ url_for('static', filename='img/inventory.png') }}" alt="Inventory Image">
+                            <div class="card-body">
+                                <h5 class="card-title">Inventario de equipos</h5>
+                                <p class="card-text">Esta aplicación te permitira gestionar, descargar reportes, y buscar equipos en el inventario de equipos de TATA.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div> -->
+                <div class="col-sm-6">
+                    <a href="/inventory_ssp">
+                        <div class="card mb-3">
+                            <img class="card-img-top img-fluid mx-auto" src="{{ url_for('static', filename='img/inventory.png') }}" alt="Inventory Image">
+                            <div class="card-body">
+                                <h5 class="card-title">Inventario de equipos</h5>
+                                <p class="card-text">Esta aplicación te permitira gestionar, descargar reportes, y buscar equipos en el inventario de equipos.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/inventories_lastsync">
+                        <div class="card mb-3">
+                            <img class="card-img-top img-fluid mx-auto" src="{{ url_for('static', filename='img/sync.png') }}" alt="Inventory Image">
+                            <div class="card-body">
+                                <h5 class="card-title">Ultima sincronizacion equipos Inventario</h5>
+                                <p class="card-text">Esta aplicación te permitira ver, descargar reportes, y buscar las fechas de las ultimas sincronizaciones que tuvieron los equipos de inventario.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        <p>Usuario: {{ current_user.username }}</p>
+        <div class="d-flex justify-content-center">
+            <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

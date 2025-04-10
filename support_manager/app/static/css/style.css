@@ -1,0 +1,123 @@
+body {
+    background: #d1d4d6;
+}
+
+.card-img-top {
+    max-width: 100px
+}
+
+.myForm {
+    padding-top: 5px;
+}
+
+.top-pad {
+    min-width: 250px;
+/*    position: absolute; */
+    text-align: center;
+/*    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); */
+    font-size: 2.5rem;
+    background: white;
+    padding: 50px;
+}
+
+.alert {
+    z-index: 100;
+}
+
+.home-body {
+    min-width: 250px;
+/*    position: absolute; */
+    text-align: left;
+/*    padding-left: 50px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); */
+    font-size: 1rem;
+    background: white;
+    padding: 50px;
+}
+
+.home {
+    min-width: 100%;
+    position: relative;
+    text-align: left;
+    padding-left: 50px;
+    font-size: 1rem;
+    background: white;
+    padding: 50px;
+}
+
+.home-body p {
+    margin-bottom: 50px;
+}
+
+.home p {
+    margin-bottom: 50px;
+}
+
+.scrollit {
+    overflow: scroll;
+}
+
+thead input {
+    width: 100%;
+}
+
+.topLogo, .topHeader {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.topLogo img {
+    width: 80px;
+    height: 80px;
+}
+
+.topHeader p {
+    font-weight: bold;
+    font-size: 2.8rem;
+}
+
+@media (max-width: 277px) {
+    .top-pad {
+        min-width: 90%;
+    }
+}
+
+.dt-button-collection button.buttons-columnVisibility:before,
+.dt-button-collection button.buttons-columnVisibility.active span:before {
+    display:block;
+    position:absolute;
+    top:1.2em;
+    left:0;
+    width:12px;
+    height:12px;
+    box-sizing:border-box;
+}
+
+.dt-button-collection button.buttons-columnVisibility:before {
+    content:' ';
+    margin-top:-6px;
+    margin-left:5px;
+    border:1px solid black;
+    border-radius:0px;
+}
+
+.dt-button-collection button.buttons-columnVisibility.active span:before {
+    content:'\2714';
+    margin-top:-11px;
+    margin-left:8px;
+    text-align:center;
+    text-shadow:1px 1px #DDD, -1px -1px #DDD, 1px -1px #DDD, -1px 1px #DDD;
+}
+
+.dt-button-collection button.buttons-columnVisibility span {
+    margin-left:8px;
+}
+	
+.dt-button-collection .dt-button {
+    position: relative;
+}
